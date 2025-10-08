@@ -171,6 +171,38 @@ In the utils.py file, change get_googleads_client() to use the load_from_storage
     }
     ```
 
+#### Login Customer Id
+
+If your access to the customer account is through a manager account, you will
+need to add the customer ID of the manager account to the settings file.
+
+See [here](https://developers.google.com/google-ads/api/docs/concepts/call-structure#cid) for details.
+
+The final file will look like this:
+
+ ```json
+    {
+      "mcpServers": {
+        "google-ads-mcp": {
+          "command": "pipx",
+          "args": [
+            "run",
+            "--spec",
+            "git+https://github.com/googleads/google-ads-mcp.git",
+            "google-ads-mcp"
+          ],
+          "env": {
+            "GOOGLE_APPLICATION_CREDENTIALS": "PATH_TO_CREDENTIALS_JSON",
+            "GOOGLE_PROJECT_ID": "YOUR_PROJECT_ID",
+            "GOOGLE_ADS_DEVELOPER_TOKEN": "YOUR_DEVELOPER_TOKEN",
+            "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "YOUR_MANAGER_CUSTOMER_ID"
+          }
+        }
+      }
+    }
+    ```
+
+
 ## Try it out
 
 Launch Gemini Code Assist or Gemini CLI and type `/mcp`. You should see

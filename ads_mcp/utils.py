@@ -54,12 +54,18 @@ def _get_developer_token() -> str:
     return dev_token
 
 
+def _get_login_customer_id() -> str:
+    """Returns login customer id, if set, from the environment variable GOOGLE_ADS_LOGIN_CUSTOMER_ID."""
+    return os.environ.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID")
+
+
 def _get_googleads_client() -> GoogleAdsClient:
     # Use this line if you have a google-ads.yaml file
     # client = GoogleAdsClient.load_from_storage()
     client = GoogleAdsClient(
         credentials=_create_credentials(),
         developer_token=_get_developer_token(),
+        login_customer_id=_get_login_customer_id()
     )
 
     return client
