@@ -14,6 +14,7 @@
 
 """Entry point for the MCP server."""
 
+import os
 from ads_mcp.coordinator import mcp
 
 # The following imports are necessary to register the tools with the `mcp`
@@ -30,7 +31,13 @@ from ads_mcp.resources import (
 
 
 def run_server() -> None:
-    mcp.run()
+    transport = os.environ.get("MCP_TRANSPORT", "stdio")
+    if transport == "streamable-http":
+        host = os.environ.get("MCP_HOST", "0.0.0.0")
+        port = int(os.environ.get("MCP_PORT", "8081"))
+        mcp.run(transport="streamable-http", host=host, port=port)
+    else:
+        mcp.run()
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ from google.ads.googleads.v23.services.services.google_ads_service import (
 
 from google.ads.googleads.util import get_nested_attr
 import google.auth
+import google.oauth2.credentials
 from ads_mcp.mcp_header_interceptor import MCPHeaderInterceptor
 import os
 import importlib.resources
@@ -36,12 +37,33 @@ _GAQL_FILENAME = "gaql_resources.txt"
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# Read-only scope for Analytics Admin API and Analytics Data API.
+# Read-only scope for Google Ads API.
 _READ_ONLY_ADS_SCOPE = "https://www.googleapis.com/auth/adwords"
 
 
 def _create_credentials() -> google.auth.credentials.Credentials:
-    """Returns Application Default Credentials with read-only scope."""
+    """Returns credentials.
+
+    If GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET and GOOGLE_ADS_REFRESH_TOKEN
+    are set, uses OAuth2 refresh-token credentials directly (suitable for containers).
+    Otherwise falls back to Application Default Credentials.
+    """
+    client_id = os.environ.get("GOOGLE_ADS_CLIENT_ID")
+    client_secret = os.environ.get("GOOGLE_ADS_CLIENT_SECRET")
+    refresh_token = os.environ.get("GOOGLE_ADS_REFRESH_TOKEN")
+
+    if client_id and client_secret and refresh_token:
+        logger.info("Using OAuth2 refresh-token credentials from environment variables.")
+        return google.oauth2.credentials.Credentials(
+            token=None,
+            refresh_token=refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=client_id,
+            client_secret=client_secret,
+            scopes=[_READ_ONLY_ADS_SCOPE],
+        )
+
+    logger.info("Using Application Default Credentials.")
     credentials, _ = google.auth.default(scopes=[_READ_ONLY_ADS_SCOPE])
     return credentials
 
