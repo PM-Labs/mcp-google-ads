@@ -1,0 +1,25 @@
+# .fork-sync-ignore — upstream commits fork-sync must skip.
+#
+# One SHA per line, optional reason after whitespace.
+# Blank lines and # comments allowed.
+#
+# See CLAUDE.md in pmin-mcpinfrastructure for the full convention. When an
+# upstream commit is listed here, the weekly sync cron on mcp-server will
+# silently skip it instead of tripping a merge conflict.
+#
+# Listed SHAs must exist in `upstream/main` — otherwise the sync script
+# will log a warning and treat the entry as a no-op.
+
+# --- mcp-google-ads: reject upstream OAuth reimplementation (2026-04-13) ---
+# Upstream implemented their own OAuth proxy in googleads/mcp-google-ads#46
+# (commit 3e0d25c + its PR merge 320dd4c). We already have our own OAuth proxy
+# plus the no-session-resurrection fix (PM-Labs/mcp-google-ads b2b6a33..246ac3d),
+# which is incompatible with upstream's approach. Keep ours.
+#
+# The standalone non-merge commits contributing to the OAuth change and related
+# packaging/lint noise that we also don't want:
+
+3e0d25c  upstream OAuth proxy implementation — we have our own + session-resurrection fix
+958f8b8  MANIFEST.in .txt addition — we build via docker, not pypi
+45f609d  README-only update for upstream OAuth docs — not relevant to our fork
+de051e6  upstream lint pass — noise, not worth the conflict surface
