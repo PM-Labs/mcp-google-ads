@@ -16,7 +16,11 @@
 
 from typing import Any, Dict, List
 from ads_mcp.coordinator import mcp
+from fastmcp.tools import Tool
+from mcp.types import ToolAnnotations
 import ads_mcp.utils as utils
+from google.ads.googleads.errors import GoogleAdsException
+from fastmcp.exceptions import ToolError
 
 
 def search(
@@ -25,7 +29,7 @@ def search(
     resource: str,
     conditions: List[str] = None,
     orderings: List[str] = None,
-    limit: int | str = None,
+    limit: int = None,
 ) -> List[Dict[str, Any]]:
     """Fetches data from the Google Ads API using the search method
 
@@ -57,17 +61,26 @@ def search(
     query = "".join(query_parts)
     utils.logger.info(f"ads_mcp.search query {query}")
 
-    query_result = ga_service.search_stream(
-        customer_id=customer_id, query=query
-    )
+    try:
+        query_result = ga_service.search_stream(
+            customer_id=customer_id, query=query
+        )
 
-    final_output: List = []
-    for batch in query_result:
-        for row in batch.results:
-            final_output.append(
-                utils.format_output_row(row, batch.field_mask.paths)
-            )
-    return final_output
+        final_output: List = []
+        for batch in query_result:
+            for row in batch.results:
+                final_output.append(
+                    utils.format_output_row(row, batch.field_mask.paths)
+                )
+        return final_output
+    except GoogleAdsException as ex:
+        error_msgs = [
+            f"Google Ads API Error: {error.message}"
+            for error in ex.failure.errors
+        ]
+        raise ToolError(
+            f"Request ID: {ex.request_id}\n" + "\n".join(error_msgs)
+        )
 
 
 def _search_tool_description() -> str:
@@ -89,7 +102,8 @@ def _search_tool_description() -> str:
 
 ### Hints
     Language Grammar can be found at https://developers.google.com/google-ads/api/docs/query/grammar
-    All resources and descriptions are found at https://developers.google.com/google-ads/api/fields/v23/overview
+    All resources and descriptions are found at https://developers.google.com/google-ads/api/fields/latest/overview
+    If the query fails, a ToolError will be raised with the error details.
 
     For Conversion issues try looking in offline_conversion_upload_conversion_action_summary
 
@@ -99,8 +113,7 @@ def _search_tool_description() -> str:
 
 ### Hints for Dates
     All dates should be in the form YYYY-MM-DD and must include the dashes (-)
-    Date literals from the Grammar must NEVER be used
-    Date ranges should be finite and must include a start and end date
+    Date ranges must be finite and must include a start and end date
 
 ### Hints for limits
     Requests to resource change_event must specify a LIMIT of less than or equal to 10000
@@ -110,10 +123,12 @@ def _search_tool_description() -> str:
 
 
 ### Hints for all resources
-    What follows is a list of valid resources that can be queried.
-    To find out which specific fields you can select, filter by, or sort by for a given resource, you MUST use the `get_resource_metadata` tool.
+    To find out which specific fields (including compatible metrics and segments) you can select, filter by, or sort by for a given resource, you MUST use the `get_resource_metadata` tool.
     Do not guess the fields. Use the tool to look them up.
     Once you have the fields, ensure the whole field name is used (e.g., 'campaign.id', not just 'id'). Wildcards and partial fields are not allowed.
+
+### Valid resources
+    What follows is a list of valid resources that can be queried.
     {file_content}
 """
 
@@ -122,8 +137,7 @@ def _search_tool_description() -> str:
 # runtime. Uses the `add_tool` method instead of an annnotation since `add_tool`
 # provides the flexibility needed to generate the description while also
 # including the `search` method's docstring.
+search.__doc__ = _search_tool_description()
 mcp.add_tool(
-    search,
-    title="Fetches data from the Google Ads API using the search method",
-    description=_search_tool_description(),
+    Tool.from_function(search, annotations=ToolAnnotations(readOnlyHint=True))
 )

@@ -1,27 +1,35 @@
 # Google Ads MCP Server
 
-This repo contains the source code for running a local
+This repo contains the source code for running an
 [MCP](https://modelcontextprotocol.io) server that interacts with the
 [Google Ads API](https://developers.google.com/google-ads/api).
 
 ## Tools
 
 The server uses the
-[Google Ads API](https://developers.google.com/google-ads/api/reference/rpc/v21/overview)
+[Google Ads API](https://developers.google.com/google-ads/api/reference/rpc/latest/overview)
 to provide several
-[Tools](https://modelcontextprotocol.io/docs/concepts/tools) for use with LLMs.
+[Tools](https://modelcontextprotocol.io/docs/concepts/tools) and [Resources](https://modelcontextprotocol.io/docs/concepts/tools) for use with LLMs and AI agents.
 
 ### Tools available
 
 - `search`: Retrieves information about the Google Ads account.
-- `list_accessible_customers`: Returns names of customers directly accessible
+- `get_resource_metadata`: Retrieves metadata about a Google Ads API resource type, for example "campaign". This is useful to understand the structure of the data and what fields are available for querying.
+- `list_accessible_customers`: Returns ids of customers directly accessible
   by the user authenticating the call.
+
+### Resources available
+
+- `discovery-document`: Retrieve the Google Ads API discovery document. Provides the discovery document for the latest version of the Google Ads API, which describes the API surface, including resources, methods, and schemas. Host LLMs should access this resource to understand the structure of the Google Ads API and discover available features.
+- `metrics`: Retrieve information about the metrics available for reporting in the Google Ads API.
+- `segments`: Retrieve information about the segments available for reporting in the Google Ads API.
+- `release-notes`: Retrieve the release notes for the latest version of the Google Ads API.
 
 ## Notes
 
 1.  The MCP Server will expose your data to the Agent or LLM that you connect to it.
 1.  If you have technical issues, please use the [GitHub issue tracker](https://github.com/googleads/google-ads-mcp/issues).
-1.  To help us collect usage data, you will notice an extra header has been added to your API calls, this data is used to improve the product.
+1.  To help us collect usage data, you will notice an extra header has been added to your API calls: this data is used to improve the product.
 
 ## Setup instructions
 
@@ -31,7 +39,7 @@ Setup involves the following steps:
 1.  Configure Developer Token.
 1.  Enable APIs in your project
 1.  Configure Credentials.
-1.  Configure Gemini.
+1.  Configure your MCP client.
 
 ### Configure Python
 
@@ -41,7 +49,12 @@ Setup involves the following steps:
 
 Follow the instructions for [Obtaining a Developer Token](https://developers.google.com/google-ads/api/docs/get-started/dev-token).
 
-Record 'YOUR_DEVELOPER_TOKEN', you will need this for the the 'Configure Gemini' step below
+Your developer token must have at least [Explorer access](https://developers.google.com/google-ads/api/docs/get-started/dev-token#access-levels) to query production accounts. New tokens may be automatically upgraded to Explorer access; if not, you can apply through the API Center. See the [access levels documentation](https://developers.google.com/google-ads/api/docs/get-started/dev-token#access-levels) for details.
+
+If you see the error *"The developer token is only approved for use with test
+accounts"*, your token does not yet have access to production accounts. See the
+[access levels documentation](https://developers.google.com/google-ads/api/docs/access-levels)
+for how to request the access level you need.
 
 ### Enable APIs in your project
 
@@ -51,7 +64,23 @@ to enable the following APIs in your Google Cloud project:
 * [Google Ads API](https://console.cloud.google.com/apis/library/googleads.googleapis.com)
 
 ### Configure Credentials
-#### Option 1: Configure credentials using Application Default Credentials
+#### Option 1: Using FastMCP OAuth Proxy
+
+The server supports FastMCP's [OAuth proxy](https://gofastmcp.com/servers/auth/oauth-proxy) feature for dynamic user authentication. This is useful when running the server as a web service.
+
+To enable it, set the following environment variables:
+
+- `GOOGLE_ADS_MCP_OAUTH_CLIENT_ID`: Your Google Cloud OAuth 2.0 Client ID.
+- `GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET`: Your Google Cloud OAuth 2.0 Client Secret.
+- `GOOGLE_ADS_MCP_BASE_URL`: (Optional) The base URL where the server is accessible (defaults to `http://localhost:8080`).
+
+Once this is enabled, you can authenticate to the API through your MCP client: for example, in Gemini CLI, the command `/mcp auth google-ads-mcp` triggers the authentication flow.
+
+When these variables are set, the server automatically switches to the `streamable-http` transport (SSE/HTTP) instead of `stdio`.
+
+You will need to run the server as a separate process and configure your MCP client to connect to the SSE endpoint (e.g., `http://localhost:8080/mcp`).
+
+#### Option 2: Configure credentials using Application Default Credentials
 
 Configure your [Application Default Credentials
 (ADC)](https://cloud.google.com/docs/authentication/provide-credentials-adc).
@@ -96,7 +125,7 @@ following message. You will need this for a later step!
 Credentials saved to file: [PATH_TO_CREDENTIALS_JSON]
 ```
 
-#### Option 2: Configure credentials using the Google Ads API Python client library.
+#### Option 3: Configure credentials using the Google Ads API Python client library.
 
 [Follow the instructions](https://developers.google.com/google-ads/api/docs/client-libs/python/)
 to setup and configure the Google Ads API Python client library
@@ -105,18 +134,41 @@ If you have already done this and have a working `google-ads.yaml` , you can reu
 
 In the utils.py file, change get_googleads_client() to use the load_from_storage() method.
 
-### Configure Gemini
+### Configure your MCP client
+
+Add the server to your MCP client's configuration. Below are examples for
+popular clients.
+
+#### Gemini CLI / Gemini Code Assist
 
 1.  Install [Gemini
     CLI](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/index.md)
     or [Gemini Code
-    Assist](https://marketplace.visualstudio.com/items?itemName=Google.geminicodeassist)
+    Assist](https://marketplace.visualstudio.com/items?itemName=Google.geminicodeassist).
 
 1.  Create or edit the file at `~/.gemini/settings.json`, adding your server
     to the `mcpServers` list.
 
+- Option 1: Using FastMCP OAuth Proxy (Streamable HTTP)
 
-- Option 1: the Application Default Credentials method
+  You can run the server as a separate process and configure your MCP client to connect to the SSE endpoint (e.g., `http://localhost:8080/mcp`).
+  This also allows using FastMCP's [OAuth proxy](https://gofastmcp.com/servers/auth/oauth-proxy) feature for dynamic user authentication.
+
+    ```json
+    {
+      "mcpServers": {
+        "google-ads-mcp": {
+          "httpUrl":"http://localhost:8080/mcp",
+          "env": {
+            "GOOGLE_PROJECT_ID": "YOUR_PROJECT_ID",
+            "GOOGLE_ADS_DEVELOPER_TOKEN": "YOUR_DEVELOPER_TOKEN"                        
+          }
+        }
+      }
+    }
+    ```
+
+- Option 2: the Application Default Credentials method
 
     Replace `PATH_TO_CREDENTIALS_JSON` with the path you copied in the previous
     step.
@@ -149,7 +201,7 @@ In the utils.py file, change get_googleads_client() to use the load_from_storage
     }
     ```
 
-- Option 2: the Python client library method
+- Option 3: the Python client library method
 
     ```json
     {
@@ -202,11 +254,76 @@ The final file will look like this:
   }
   ```
 
+#### Other MCP clients (Claude Code, Cursor, VS Code, etc.)
+
+The `mcpServers` block format is the same across all MCP clients. Add the configuration shown above to the appropriate settings file for your client (e.g., `~/.claude/settings.json` for Claude Code, `.cursor/mcp.json` for Cursor, `.vscode/mcp.json` for VS Code with Copilot).
+
+## Deployment to Google Cloud Platform
+
+Instead of hosting this MCP server locally, you can host it on Google Cloud Run or on any other cloud-based infrastructure. This is useful if you want to share the server across different agents or run it as a web service.
+
+Note that this only supports authentication with an OAuth Client ID and Client Secret pair through the OAuth proxy (Option #1 above).
+
+### Prerequisites
+
+1.  A Google Cloud project.
+2.  The `gcloud` CLI installed, authenticated, and active project set.
+    ```shell
+    gcloud config set project YOUR_PROJECT_ID
+    ```
+
+### Step 1: Build and Push Docker Image
+
+You can use Cloud Build to build and push the image to Artifact Registry without needing Docker installed locally.
+
+1.  Create a repository in Artifact Registry:
+    ```shell
+    gcloud artifacts repositories create mcp-servers --repository-format=docker --location=us-central1
+    ```
+2.  Build and submit the image:
+    ```shell
+    gcloud builds submit --tag us-central1-docker.pkg.dev/YOUR_PROJECT_ID/mcp-servers/google-ads-mcp:latest .
+    ```
+    Replace `YOUR_PROJECT_ID` with your Google Cloud project ID.
+
+### Step 2: Deploy to Google Cloud Run
+
+Make sure to set the required environment variables:
+
+- `GOOGLE_PROJECT_ID`: Your Google Cloud project ID.
+- `GOOGLE_ADS_DEVELOPER_TOKEN`: The developer token you want the MCP server to use (see above).
+- `GOOGLE_ADS_MCP_OAUTH_CLIENT_ID`: The OAuth Client ID you want the MCP server to use.
+- `GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET`: The OAuth Client secret you want the MCP server to use.
+- `GOOGLE_ADS_MCP_BASE_URL`: The base URL where your MCP server is accessible: this will be automatically assigned by Google Cloud Run after your first deployment. You can update the environment variables after deployment. 
+- `FASTMCP_HOST`: Set this to `0.0.0.0` to allow FastMCP to accept connections from all IP addresses.
+
+```shell
+gcloud run deploy google-ads-mcp \
+  --image us-central1-docker.pkg.dev/YOUR_PROJECT_ID/mcp-servers/google-ads-mcp:latest \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars="GOOGLE_PROJECT_ID=YOUR_PROJECT_ID,GOOGLE_ADS_DEVELOPER_TOKEN=YOUR_DEVELOPER_TOKEN,GOOGLE_ADS_MCP_OAUTH_CLIENT_ID=YOUR_CLIENT_ID,GOOGLE_ADS_MCP_OAUTH_CLIENT_SECRET=YOUR_CLIENT_SECRET,GOOGLE_ADS_MCP_BASE_URL=YOUR_BASE_URL,FASTMCP_HOST=0.0.0.0"
+```
+
+### Step 3: Configure MCP Client
+
+Once deployed, update your MCP client configuration (e.g., `~/.gemini/settings.json`) to use the Cloud Run URL.
+
+```json
+{
+  "mcpServers": {
+    "google-ads-mcp": {
+      "httpUrl": "https://your-cloud-run-url.a.run.app/mcp"
+    }
+  }
+}
+```
 
 ## Try it out
 
-Launch Gemini Code Assist or Gemini CLI and type `/mcp`. You should see
-`google-ads-mcp` listed in the results.
+Launch your MCP client. You should see `google-ads-mcp` listed in the
+available servers.
 
 Here are some sample prompts to get you started:
 
@@ -241,6 +358,22 @@ be simpler.
 ```
 How many active campaigns do I have for customer id 1234567890
 ```
+
+## Skills
+
+This repository also provides [Agent Skills](https://agentskills.io/), which are specialized workflows and instructions that give AI agents specific expertise.
+
+### Skills available
+
+- `account-performance-diagnostics`: Diagnose account performance issues such as conversion loss, low lead flow, and lost opportunities. Located in `ads_mcp/skills/account-performance-diagnostics`.
+
+### How to install skills
+
+To use these skills, you need to point your skills-compatible AI agent to the skill directory.
+
+For example, if you are using [Gemini CLI](https://github.com/google-gemini/gemini-cli), you can install the skill by copying the folder to your skills directory or referencing it. See the [Gemini CLI Skills documentation](https://geminicli.com/docs/cli/skills/) for detailed instructions.
+
+While that guide is specific to Gemini CLI, Agent Skills are an open standard and can be loaded by any compatible agent or LLM tool that supports the format (e.g., Claude Code, Cursor).
 
 
 ## Contributing

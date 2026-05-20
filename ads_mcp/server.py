@@ -29,6 +29,9 @@ from ads_mcp.resources import (
 )  # noqa: F401
 
 
+import os
+
+
 def run_server() -> None:
     import os
     transport = os.environ.get("MCP_TRANSPORT", "stdio")
