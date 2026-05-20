@@ -3,8 +3,8 @@ name: CI
 on:
   pull_request:
     branches: [ main ]
-  push:
-    branches: [ main ]
+  # Push trigger disabled on our fork — deployed from source on the droplet, not GHCR.
+  workflow_dispatch:
 
 jobs:
   lint:
