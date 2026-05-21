@@ -22,8 +22,4 @@ of the server.
 import os
 from fastmcp import FastMCP
 
-mcp = FastMCP(
-    "Google Ads Server",
-    host=os.environ.get("MCP_HOST", "0.0.0.0"),
-    port=int(os.environ.get("MCP_PORT", "8081")),
-)
+mcp = FastMCP("Google Ads Server")
