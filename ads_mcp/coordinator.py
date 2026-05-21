@@ -20,7 +20,7 @@ of the server.
 """
 
 import os
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
 mcp = FastMCP(
     "Google Ads Server",
