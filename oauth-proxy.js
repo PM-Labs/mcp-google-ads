@@ -150,7 +150,6 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (path === "/mcp" || path.startsWith("/mcp/")) {
-    if (req.method === "GET") return sendJson(res, 405, { error: "method_not_allowed", detail: "MCP endpoint requires POST" });
     if (AUTH_TOKEN) {
       const ah = req.headers["authorization"];
       if (!ah || !ah.startsWith("Bearer ")) {
