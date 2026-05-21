@@ -11,7 +11,7 @@ python -m ads_mcp.server &
 PYTHON_PID=$!
 
 for i in $(seq 1 30); do
-  if curl -sf "http://localhost:${BACKEND_PORT:-8081}/mcp" > /dev/null 2>&1; then
+  if curl -s "http://localhost:${BACKEND_PORT:-8081}/mcp" -o /dev/null 2>&1; then
     echo "Python MCP server ready"
     break
   fi

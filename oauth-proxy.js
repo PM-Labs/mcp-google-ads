@@ -2,11 +2,30 @@ const http = require("http");
 const { randomUUID, createHash } = require("crypto");
 const { URL } = require("url");
 
+const fs = require("fs");
+
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const BACKEND_PORT = parseInt(process.env.BACKEND_PORT || "8081", 10);
 const AUTH_TOKEN = (process.env.MCP_AUTH_TOKEN || "").trim();
 const OAUTH_CLIENT_ID = (process.env.OAUTH_CLIENT_ID || "claude-pathfinder").trim();
 const OAUTH_CLIENT_SECRET = (process.env.OAUTH_CLIENT_SECRET || "").trim();
+const TOKEN_TTL_SECONDS = 7776000;
+const TOKEN_META_PATH = "/tmp/mcp-token-meta.json";
+
+let tokenIssuedAt = null;
+try {
+  const meta = JSON.parse(fs.readFileSync(TOKEN_META_PATH, "utf8"));
+  if (meta.issued_at) tokenIssuedAt = meta.issued_at;
+} catch { /* no prior issuance */ }
+
+function recordTokenIssuance() {
+  tokenIssuedAt = Math.floor(Date.now() / 1000);
+  try {
+    fs.writeFileSync(TOKEN_META_PATH, JSON.stringify({ issued_at: tokenIssuedAt, expires_in: TOKEN_TTL_SECONDS }));
+  } catch (err) {
+    console.error("Failed to write token meta:", err.message);
+  }
+}
 
 const authCodes = {};
 
@@ -80,6 +99,11 @@ const server = http.createServer(async (req, res) => {
     });
   }
 
+  if (path === "/.well-known/token-expiry" && req.method === "GET") {
+    if (tokenIssuedAt === null) return sendJson(res, 404, { error: "no_token_issued" });
+    return sendJson(res, 200, { issued_at: tokenIssuedAt, expires_in: TOKEN_TTL_SECONDS, expires_at: tokenIssuedAt + TOKEN_TTL_SECONDS });
+  }
+
   if (path === "/authorize" && req.method === "GET") {
     const p = url.searchParams;
     if (p.get("client_id") !== OAUTH_CLIENT_ID) return sendJson(res, 401, { error: "invalid_client" });
@@ -110,7 +134,8 @@ const server = http.createServer(async (req, res) => {
         const challenge = createHash("sha256").update(verifier).digest("base64url");
         if (challenge !== stored.codeChallenge) return sendJson(res, 400, { error: "invalid_grant" });
       }
-      return sendJson(res, 200, { access_token: AUTH_TOKEN, token_type: "Bearer", expires_in: 86400 });
+      recordTokenIssuance();
+      return sendJson(res, 200, { access_token: AUTH_TOKEN, token_type: "Bearer", expires_in: TOKEN_TTL_SECONDS });
     }
     let cid, csec;
     const ba = req.headers["authorization"];
@@ -120,7 +145,8 @@ const server = http.createServer(async (req, res) => {
       cid = decoded.slice(0, colon); csec = decoded.slice(colon + 1);
     } else { cid = body.client_id; csec = body.client_secret; }
     if (cid !== OAUTH_CLIENT_ID || csec !== OAUTH_CLIENT_SECRET) return sendJson(res, 401, { error: "invalid_client" });
-    return sendJson(res, 200, { access_token: AUTH_TOKEN, token_type: "Bearer", expires_in: 86400 });
+    recordTokenIssuance();
+    return sendJson(res, 200, { access_token: AUTH_TOKEN, token_type: "Bearer", expires_in: TOKEN_TTL_SECONDS });
   }
 
   if (path === "/mcp" || path.startsWith("/mcp/")) {
