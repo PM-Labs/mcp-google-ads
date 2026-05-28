@@ -4,10 +4,15 @@ from unittest.mock import MagicMock, patch, call
 
 class TestKeywordPlanner(unittest.TestCase):
 
-    @patch("ads_mcp.utils.get_googleads_client")
+    def test_generate_keyword_ideas_raises_when_no_seed(self):
+        from ads_mcp.tools.keyword_planner import generate_keyword_ideas
+        from fastmcp.exceptions import ToolError
+        with self.assertRaises(ToolError):
+            generate_keyword_ideas("123", [], 1000, [2036])
+
     @patch("ads_mcp.utils.get_googleads_type")
     @patch("ads_mcp.utils.get_googleads_service")
-    def test_generate_keyword_ideas_keyword_seed(self, mock_get_svc, mock_get_type, mock_get_client):
+    def test_generate_keyword_ideas_keyword_seed(self, mock_get_svc, mock_get_type):
         mock_service = MagicMock()
         mock_get_svc.return_value = mock_service
 
@@ -39,13 +44,14 @@ class TestKeywordPlanner(unittest.TestCase):
         self.assertEqual(result[0]["low_top_of_page_bid_micros"], 500000)
         self.assertEqual(result[0]["high_top_of_page_bid_micros"], 1500000)
 
-    @patch("ads_mcp.utils.get_googleads_client")
     @patch("ads_mcp.utils.get_googleads_type")
     @patch("ads_mcp.utils.get_googleads_service")
-    def test_generate_keyword_ideas_url_seed(self, mock_get_svc, mock_get_type, mock_get_client):
+    def test_generate_keyword_ideas_url_seed(self, mock_get_svc, mock_get_type):
         mock_service = MagicMock()
         mock_get_svc.return_value = mock_service
-        mock_get_type.return_value = MagicMock()
+
+        mock_request = MagicMock()
+        mock_get_type.return_value = mock_request
         mock_service.generate_keyword_ideas.return_value = []
 
         from ads_mcp.tools.keyword_planner import generate_keyword_ideas
@@ -58,11 +64,12 @@ class TestKeywordPlanner(unittest.TestCase):
         )
 
         mock_service.generate_keyword_ideas.assert_called_once()
+        # Verify URL-seed branch was taken, not keyword-seed
+        self.assertEqual(mock_request.url_seed.url, "https://example.com")
 
-    @patch("ads_mcp.utils.get_googleads_client")
     @patch("ads_mcp.utils.get_googleads_type")
     @patch("ads_mcp.utils.get_googleads_service")
-    def test_generate_keyword_historical_metrics(self, mock_get_svc, mock_get_type, mock_get_client):
+    def test_generate_keyword_historical_metrics(self, mock_get_svc, mock_get_type):
         mock_service = MagicMock()
         mock_get_svc.return_value = mock_service
         mock_get_type.return_value = MagicMock()
@@ -89,10 +96,9 @@ class TestKeywordPlanner(unittest.TestCase):
         self.assertEqual(result[0]["text"], "best running shoes")
         self.assertEqual(result[0]["avg_monthly_searches"], 2400)
 
-    @patch("ads_mcp.utils.get_googleads_client")
     @patch("ads_mcp.utils.get_googleads_type")
     @patch("ads_mcp.utils.get_googleads_service")
-    def test_generate_ad_group_themes(self, mock_get_svc, mock_get_type, mock_get_client):
+    def test_generate_ad_group_themes(self, mock_get_svc, mock_get_type):
         mock_service = MagicMock()
         mock_get_svc.return_value = mock_service
         mock_get_type.return_value = MagicMock()
@@ -114,6 +120,7 @@ class TestKeywordPlanner(unittest.TestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]["display_name"], "Trail Running")
+        self.assertEqual(result[0]["keywords"], ["trail running shoes", "off road running"])
 
 
 if __name__ == "__main__":
