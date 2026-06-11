@@ -23,3 +23,8 @@
 958f8b8  MANIFEST.in .txt addition — we build via docker, not pypi
 45f609d  README-only update for upstream OAuth docs — not relevant to our fork
 de051e6  upstream lint pass — noise, not worth the conflict surface
+
+# --- mcp-google-ads: skip Windows deadlock fix (2026-06-07) ---
+# f953ff4 adds a context manager to prevent stdio handle inheritance on Windows.
+# We run Linux containers — this is a no-op on Linux and conflicts with our fork.
+f953ff4  Windows-only stdio deadlock fix — not applicable to Linux containers
