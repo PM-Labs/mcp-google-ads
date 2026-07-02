@@ -38,3 +38,6 @@ cb681d7  already applied as 6a6353d (Ensure the schema generated for the search 
 45f42be  already applied as ff8ecb4 (Make the exposed tools configurable — second commit)
 fdda341  already applied as db7ba7e (Rename the search tool in tests)
 cb80934  already applied as 88eeebc (fix: bundle default tools_config.yaml)
+
+# Auto-blocked by security scanner 2026-07-02T11:56:04+00:00
+c62e60f0aa263fbf0b886919ae5a8daf75fb4cfd  # security-scan: suspiciously long line (>300 chars, possible obfuscation)
