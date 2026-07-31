@@ -43,3 +43,10 @@ cb80934  already applied as 88eeebc (fix: bundle default tools_config.yaml)
 # Upstream 8594723 adds serialization of bare PbMessage instances.
 # Already applied to our fork as 1a8f2e9 (cherry-pick with minor patch divergence).
 8594723fddbdac0c58badd9b557f7e507e29eb4b  already applied as 1a8f2e9 (serialize bare PbMessage instances in format_output_value)
+
+# --- mcp-google-ads: upstream commit 2d01b97e (2026-07-26) ---
+# This commit conflicts with our OAuth proxy implementation (our fork has a custom
+# OAuth flow via PM-Labs/mcp-google-ads b2b6a33..246ac3d; upstream's 2d01b97 adds
+# credential logging changes that diverge from our approach).
+# TODO: manually cherry-pick the non-OAuth parts if needed in a future session.
+2d01b97e  skip — conflicts with our OAuth proxy implementation
