@@ -104,6 +104,11 @@ def clean_customer_id(customer_id: str | int) -> str:
     return re.sub(r"\D", "", str(customer_id))
 
 
+def clean_customer_id(customer_id: str | int) -> str:
+    """Cleans a customer ID by stripping non-digit characters."""
+    return re.sub(r"\D", "", str(customer_id))
+
+
 def _get_login_customer_id() -> str | None:
     """Returns login customer id, if set, from the environment variable GOOGLE_ADS_LOGIN_CUSTOMER_ID."""
     login_customer_id = os.environ.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID")
