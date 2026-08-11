@@ -50,3 +50,17 @@ cb80934  already applied as 88eeebc (fix: bundle default tools_config.yaml)
 # credential logging changes that diverge from our approach).
 # TODO: manually cherry-pick the non-OAuth parts if needed in a future session.
 2d01b97e  skip — conflicts with our OAuth proxy implementation
+
+# --- mcp-google-ads: FastMCP production auth configuration (2026-08-11) ---
+# Upstream PR #95 (f8130b1) adds configurable JWT token storage backends
+# (filetree/redis/memory) and wires jwt_signing_key into FastMCP GoogleProvider.
+# Our fork removed GoogleProvider entirely — we auth at the Cloudflare/Caddy
+# proxy level. f8130b1 conflicts with our coordinator.py and provides no benefit.
+f8130b1  skip — conflicts with coordinator.py; we auth at proxy level not via FastMCP GoogleProvider
+150bbce  merge commit for PR #95 (production auth configuration) — listed for audit hygiene
+
+# --- mcp-google-ads: remove account-performance-diagnostics skill (2026-08-11) ---
+# Upstream PR #97 (38ac5b1) removes the skill (moved to upstream skills repo).
+# Applied cleanly to our fork as 4bd4696.
+38ac5b1  applied as 4bd4696 (remove account-performance-diagnostics SKILL.md)
+91beff7  merge commit for PR #97 — listed for audit hygiene
