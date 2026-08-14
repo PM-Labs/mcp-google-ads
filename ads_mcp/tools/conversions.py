@@ -33,6 +33,28 @@ def _resolve_enum(client, enum_name: str, value: str):
         )
 
 
+def _format_googleads_error(ex: GoogleAdsException) -> str:
+    """Renders a GoogleAdsException with the field path of each error.
+
+    The bare `error.message` for a field-level failure is untargeted -- e.g.
+    "The field attempted to be mutated is immutable." names no field, which
+    makes a failing mutate effectively undiagnosable without a code change and
+    redeploy. `error.location.field_path_elements` carries the actual path, so
+    always render it when present.
+    """
+    lines = [f"Request ID: {ex.request_id}"]
+    for error in ex.failure.errors:
+        path_elements = getattr(
+            getattr(error, "location", None), "field_path_elements", []
+        ) or []
+        path = ".".join(
+            str(getattr(el, "field_name", "")) for el in path_elements
+            if getattr(el, "field_name", "")
+        )
+        lines.append(f"{error.message} [field: {path}]" if path else error.message)
+    return "\n".join(lines)
+
+
 def _parse_send_to(snippets) -> tuple[Optional[str], Optional[str], Optional[str]]:
     """Extracts (conversion_id, label, send_to) from a conversion action's tag snippets.
 
@@ -62,13 +84,12 @@ def create_conversion_action(
     category: str,
     type: str = "WEBPAGE",
     status: str = "ENABLED",
-    counting_type: str = "ONE_PER_CLICK",
-    click_through_lookback_window_days: int = 30,
-    view_through_lookback_window_days: int = 1,
+    counting_type: Optional[str] = None,
+    click_through_lookback_window_days: Optional[int] = None,
+    view_through_lookback_window_days: Optional[int] = None,
     default_value: Optional[float] = None,
     always_use_default_value: bool = False,
     default_currency_code: Optional[str] = None,
-    include_in_conversions_metric: bool = True,
 ) -> dict:
     """Creates a Google Ads conversion action (e.g. a website lead-form or purchase goal).
 
@@ -87,17 +108,32 @@ def create_conversion_action(
             (Invalid values return the full valid list.)
         type: Conversion action type. Default "WEBPAGE".
         status: "ENABLED" (default), "HIDDEN", or "REMOVED" (REMOVED = archived).
-        counting_type: "ONE_PER_CLICK" (default, use for leads) or
-            "MANY_PER_CLICK" (use for purchases/e-commerce).
-        click_through_lookback_window_days: Click-through conversion window. Default 30.
-        view_through_lookback_window_days: View-through conversion window. Default 1.
+        counting_type: Optional. "ONE_PER_CLICK" (use for leads) or
+            "MANY_PER_CLICK" (use for purchases/e-commerce). Omit to let the
+            API pick the default for the chosen category.
+        click_through_lookback_window_days: Optional click-through conversion
+            window. Omit for the API default.
+        view_through_lookback_window_days: Optional view-through conversion
+            window. Omit for the API default.
         default_value: Optional default conversion value (a number, e.g. 50.0).
         always_use_default_value: If True, always report default_value rather than
             a tag-supplied value. Default False.
         default_currency_code: Optional ISO 4217 currency for the default value
             (e.g. "AUD"). Only meaningful when default_value is set.
-        include_in_conversions_metric: Whether to include this action in the
-            "Conversions" reporting metric. Default True.
+
+    Note:
+        Only fields explicitly supplied by the caller are set on the create
+        operation — everything else is left to the API's own defaults. This
+        mirrors Google's official add_conversion_action.py sample. Setting
+        fields the API considers immutable-at-create fails the whole mutate
+        with IMMUTABLE_FIELD, so do not reintroduce unconditional assignment.
+
+        `include_in_conversions_metric` is deliberately NOT a parameter. Under
+        Google's conversion-goals model, whether an action counts toward the
+        "Conversions" metric is governed by `primary_for_goal` and the
+        customer/campaign conversion goals — setting it directly on create
+        returns IMMUTABLE_FIELD and was the cause of this tool failing on
+        every call prior to 2026-08-14.
 
     Returns:
         A dict with: resource_name, id, name, status, conversion_id
@@ -119,16 +155,18 @@ def create_conversion_action(
     conversion_action.status = _resolve_enum(
         client, "ConversionActionStatusEnum", status
     )
-    conversion_action.counting_type = _resolve_enum(
-        client, "ConversionActionCountingTypeEnum", counting_type
-    )
-    conversion_action.click_through_lookback_window_days = (
-        click_through_lookback_window_days
-    )
-    conversion_action.view_through_lookback_window_days = (
-        view_through_lookback_window_days
-    )
-    conversion_action.include_in_conversions_metric = include_in_conversions_metric
+    if counting_type is not None:
+        conversion_action.counting_type = _resolve_enum(
+            client, "ConversionActionCountingTypeEnum", counting_type
+        )
+    if click_through_lookback_window_days is not None:
+        conversion_action.click_through_lookback_window_days = (
+            click_through_lookback_window_days
+        )
+    if view_through_lookback_window_days is not None:
+        conversion_action.view_through_lookback_window_days = (
+            view_through_lookback_window_days
+        )
 
     if default_value is not None:
         conversion_action.value_settings.default_value = default_value
@@ -148,10 +186,7 @@ def create_conversion_action(
             customer_id=customer_id, operations=[operation]
         )
     except GoogleAdsException as ex:
-        raise ToolError(
-            f"Request ID: {ex.request_id}\n"
-            + "\n".join(e.message for e in ex.failure.errors)
-        )
+        raise ToolError(_format_googleads_error(ex))
 
     resource_name = response.results[0].resource_name
     conversion_action_id = resource_name.rsplit("/", 1)[-1]
