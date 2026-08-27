@@ -70,3 +70,6 @@ f8130b1  skip — conflicts with coordinator.py; we auth at proxy level not via 
 # Patch equivalence did not match the resolved cherry-pick; listed to suppress re-detection.
 8e164ff59e8c49b29b2fd8e6149f9b80cdc9f5aa  already applied as 6f4d1b5
 f0735c1  merge commit for upstream PR 104 - audit hygiene
+
+# a11b95b applied manually as 6bd18f1 with conflict resolution (v25 token snapshot diffs)
+a11b95b8ad9e8dba0482746a4e7d0ba086f27220
