@@ -64,3 +64,9 @@ f8130b1  skip — conflicts with coordinator.py; we auth at proxy level not via 
 # Applied cleanly to our fork as 4bd4696.
 38ac5b1  applied as 4bd4696 (remove account-performance-diagnostics SKILL.md)
 91beff7  merge commit for PR #97 — listed for audit hygiene
+
+# --- mcp-google-ads: Firestore storage backend (2026-08-27) ---
+# 8e164ff was manually cherry-picked on 2026-08-26 as fork commit 6f4d1b5.
+# Patch equivalence did not match the resolved cherry-pick; listed to suppress re-detection.
+8e164ff59e8c49b29b2fd8e6149f9b80cdc9f5aa  already applied as 6f4d1b5
+f0735c1  merge commit for upstream PR 104 - audit hygiene
