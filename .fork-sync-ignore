@@ -73,3 +73,6 @@ f0735c1  merge commit for upstream PR 104 - audit hygiene
 
 # a11b95b applied manually as 6bd18f1 with conflict resolution (v25 token snapshot diffs)
 a11b95b8ad9e8dba0482746a4e7d0ba086f27220
+
+# 32c804f applied manually as 7ef080e with conflict resolution (FastMCP 4.0.3 upgrade)
+32c804f15126db32e85d47fa3215626fb79d7893
