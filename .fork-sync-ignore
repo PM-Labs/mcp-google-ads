@@ -79,3 +79,6 @@ a11b95b8ad9e8dba0482746a4e7d0ba086f27220
 
 # ab43e83 applied manually as b5a42d5 with conflict resolution (utils_test.py: kept HEAD developer_token tests)
 ab43e83dcaa5f36f74bdd90fa988671c86925882
+
+# f28c5bb applied manually as a7e053f with conflict resolution (Add automated package release workflow (add/add release.yml conflict resolved))
+f28c5bb3e421556418e531a021f921217e88ac2e
