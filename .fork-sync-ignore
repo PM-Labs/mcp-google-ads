@@ -76,3 +76,6 @@ a11b95b8ad9e8dba0482746a4e7d0ba086f27220
 
 # 32c804f applied manually as 7ef080e with conflict resolution (FastMCP 4.0.3 upgrade)
 32c804f15126db32e85d47fa3215626fb79d7893
+
+# ab43e83 applied manually as b5a42d5 with conflict resolution (utils_test.py: kept HEAD developer_token tests)
+ab43e83dcaa5f36f74bdd90fa988671c86925882
