@@ -6,9 +6,9 @@ const fs = require("fs");
 
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const BACKEND_PORT = parseInt(process.env.BACKEND_PORT || "8081", 10);
-const AUTH_TOKEN = (process.env.MCP_AUTH_TOKEN || "").trim();
-const OAUTH_CLIENT_ID = (process.env.OAUTH_CLIENT_ID || "claude-pathfinder").trim();
-const OAUTH_CLIENT_SECRET = (process.env.OAUTH_CLIENT_SECRET || "").trim();
+const AUTH_TOKEN = (process.env.GOOGLE_ADS_MCP_AUTH_TOKEN || "").trim();
+const OAUTH_CLIENT_ID = (process.env.GOOGLE_ADS_OAUTH_CLIENT_ID || "claude-pathfinder").trim();
+const OAUTH_CLIENT_SECRET = (process.env.GOOGLE_ADS_OAUTH_CLIENT_SECRET || "").trim();
 const TOKEN_TTL_SECONDS = 7776000;
 const TOKEN_META_PATH = "/tmp/mcp-token-meta.json";
 
