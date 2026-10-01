@@ -116,6 +116,14 @@ Four tools: `create_conversion_action`, `update_conversion_action`,
   (`TYPES_WITH_TAG`: web page, website call, click-to-call, upload calls — set
   from live evidence); other types return `snippets_ready: None` instead of
   burning the retry budget.
+- **Click uploads are blocked by Google for our developer token** (checked live
+  2026-10-01): `UploadClickConversions` answers "New integrations ... should use
+  the Data Manager API ... limited to existing users" for every row. Call
+  uploads still work. The fix is a Data Manager API path, which needs the API
+  enabled in the Cloud project, a refresh token re-minted with the
+  `https://www.googleapis.com/auth/datamanager` scope (a shared credential — it
+  affects every tool), and the operating account granted access to the
+  destination. Not built; needs a decision first.
 - **`validate_only` lives in the request object.** The client library's
   `upload_*_conversions()` methods don't take it as a keyword; build the request
   type. Mock-based tests accepted the bad call and the tool shipped broken, so

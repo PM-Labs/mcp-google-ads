@@ -6,6 +6,9 @@ sinks the rest, and every row gets its own result.
 
 Out of scope on purpose: enhanced conversions for leads (hashed email/phone)
 and conversion adjustments (restatements/retractions).
+
+Known limit: Google rejects click uploads through this API for our developer
+token (new integrations must use the Data Manager API). See the tool docstring.
 """
 
 import re
@@ -132,6 +135,13 @@ def upload_offline_conversions(
     Use kind="click" for conversions matched by a click id, or kind="call" for
     conversions matched by the caller's phone number. The conversion action
     must be of the matching upload type (UPLOAD_CLICKS or UPLOAD_CALLS).
+
+    KNOWN LIMIT (checked live 2026-10-01): Google currently rejects kind="click"
+    for our developer token with "New integrations for uploading click
+    conversions should use the Data Manager API". Every click row then comes
+    back as an error. kind="call" reaches Google's normal validation (calls
+    must be at least 6 hours old). HubSpot's own integration still uploads
+    click conversions to the existing "HubSpot - ..." conversions.
 
     Rows are sent with partial failure on, so one bad row does not stop the
     others; each row gets its own result. For click uploads, include order_id
