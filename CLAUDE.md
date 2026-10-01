@@ -100,16 +100,24 @@ Four tools: `create_conversion_action`, `update_conversion_action`,
 - **Update sends only supplied fields**, with an explicit `update_mask`
   (`value_settings.*` for the nested ones). Same principle as the create
   invariant above — never assign a field the caller didn't pass.
-- **Remove is permanent** (Google never lets a removed action be re-enabled).
-  `status` on update accepts only ENABLED/HIDDEN and points at the remove tool.
+- **Remove sets status REMOVED** (the action stays listed). Google currently
+  lets `update_conversion_action(status="ENABLED")` revive a removed action
+  (verified live 2026-10-01), so don't call removal permanent. `status` on
+  update accepts only ENABLED/HIDDEN and points at the remove tool.
 - **Every write reads back** from the API and returns that state, not the
   request echoed.
 - **Uploads always use partial failure** and return one result per row.
   Unknown row keys are refused (a typo'd `gclidd` would otherwise upload
   nothing silently). Out of scope by design: enhanced conversions for leads
   (hashed email/phone) and upload adjustments (restatements/retractions).
-- Tag snippets are only waited for on types that have a tag (`TYPES_WITH_TAG`);
-  other types return `snippets_ready: None` instead of burning the retry budget.
+- Tag snippets are only waited for on types that return them
+  (`TYPES_WITH_TAG`: web page, website call, click-to-call, upload calls — set
+  from live evidence); other types return `snippets_ready: None` instead of
+  burning the retry budget.
+- **Only send what the caller asked for — live proof:** Google rejects
+  `value_settings.always_use_default_value` (even `False`) on website-call and
+  ad-call types, so it is sent only when `True`. Unit tests can't catch this
+  class of bug; run new types against a real account.
 
 ---
 

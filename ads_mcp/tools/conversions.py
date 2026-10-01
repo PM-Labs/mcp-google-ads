@@ -32,8 +32,9 @@ CREATABLE_TYPES = (
     "UPLOAD_CALLS",
 )
 
-# Only these carry a tag, so only these have snippets worth waiting for.
-TYPES_WITH_TAG = ("WEBPAGE", "WEBSITE_CALL")
+# These return tag snippets (confirmed live, 2026-10-01), so create waits for
+# them. UPLOAD_CLICKS returned none; AD_CALL is treated as having none.
+TYPES_WITH_TAG = ("WEBPAGE", "WEBSITE_CALL", "CLICK_TO_CALL", "UPLOAD_CALLS")
 
 
 def _resolve_enum(client, enum_name: str, value: str):
@@ -168,7 +169,7 @@ def create_conversion_action(
             window. Omit for the API default.
         default_value: Optional default conversion value (a number, e.g. 50.0).
         always_use_default_value: If True, always report default_value rather than
-            a tag-supplied value. Default False.
+            a tag-supplied value. Default False (not sent at all).
         default_currency_code: Optional ISO 4217 currency for the default value
             (e.g. "AUD"). Only meaningful when default_value is set.
         phone_call_duration_seconds: Optional. For call types: the minimum call
@@ -196,7 +197,7 @@ def create_conversion_action(
         (e.g. "AW-123456789"), conversion_label, send_to, tag_snippets, and
         snippets_ready (False if snippets had not propagated before the retry
         budget elapsed — re-query the conversion_action by id shortly after;
-        None for types that have no tag, such as the upload and ad-call types).
+        None for types that have no tag, such as UPLOAD_CLICKS).
     """
     if type not in CREATABLE_TYPES:
         raise ToolError(
@@ -238,9 +239,10 @@ def create_conversion_action(
 
     if default_value is not None:
         conversion_action.value_settings.default_value = default_value
-    conversion_action.value_settings.always_use_default_value = (
-        always_use_default_value
-    )
+    # Only sent when asked for: Google rejects this field on website-call and
+    # ad-call types even as False (found live, 2026-10-01).
+    if always_use_default_value:
+        conversion_action.value_settings.always_use_default_value = True
     if default_currency_code:
         conversion_action.value_settings.default_currency_code = (
             default_currency_code
@@ -451,10 +453,12 @@ def update_conversion_action(
 
 @mcp.tool()
 def remove_conversion_action(customer_id: str, conversion_action_id: str) -> dict:
-    """Removes a conversion action. PERMANENT: Google does not allow a removed
-    conversion action to be re-enabled, and campaigns that were bidding on it
-    lose that signal. Use update_conversion_action(status="HIDDEN") instead if
-    you only want to stop it being used while keeping it.
+    """Removes a conversion action. It stays listed with status REMOVED and
+    campaigns that were bidding on it lose that signal while it is removed.
+    Google currently lets update_conversion_action(status="ENABLED") bring a
+    removed one back (checked live 2026-10-01) but do not plan around that. Use
+    update_conversion_action(status="HIDDEN") instead if you only want to stop it
+    being used while keeping it.
 
     Args:
         customer_id: Google Ads customer ID (digits only, no hyphens).

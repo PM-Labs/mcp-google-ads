@@ -325,6 +325,60 @@ class TestCreateConversionActionPhoneAndPrimary(unittest.TestCase):
         self.assertFalse(result["snippets_ready"])
 
 
+class TestCreateOnlySendsWhatWasAsked(unittest.TestCase):
+    """Live finding (2026-10-01): Google rejects value_settings.always_use_default_value
+    on website-call and ad-call types, so it must only be sent when asked for."""
+
+    @patch(PATCHES[0])
+    @patch(PATCHES[1])
+    @patch(PATCHES[2])
+    def test_always_use_default_value_not_sent_unless_true(
+        self, mock_get_client, mock_get_type, mock_get_svc
+    ):
+        _, action, _ = _wire(mock_get_client, mock_get_type, mock_get_svc)
+
+        from ads_mcp.tools.conversions import create_conversion_action
+        create_conversion_action(
+            customer_id="123", name="x", category="PHONE_CALL_LEAD",
+            type="WEBSITE_CALL",
+        )
+        self.assertNotIn("always_use_default_value", action.value_settings.assigned)
+
+    @patch(PATCHES[0])
+    @patch(PATCHES[1])
+    @patch(PATCHES[2])
+    def test_always_use_default_value_sent_when_true(
+        self, mock_get_client, mock_get_type, mock_get_svc
+    ):
+        _, action, _ = _wire(mock_get_client, mock_get_type, mock_get_svc)
+
+        from ads_mcp.tools.conversions import create_conversion_action
+        create_conversion_action(
+            customer_id="123", name="x", category="PURCHASE",
+            default_value=10.0, always_use_default_value=True,
+        )
+        self.assertIs(action.value_settings.always_use_default_value, True)
+        self.assertEqual(action.value_settings.default_value, 10.0)
+
+    @patch(PATCHES[0])
+    @patch(PATCHES[1])
+    @patch(PATCHES[2])
+    def test_types_that_return_snippets_are_waited_for(
+        self, mock_get_client, mock_get_type, mock_get_svc
+    ):
+        """Live finding: click-to-call and upload-calls return tag snippets."""
+        from ads_mcp.tools.conversions import create_conversion_action
+        for t in ("WEBPAGE", "WEBSITE_CALL", "CLICK_TO_CALL", "UPLOAD_CALLS"):
+            with self.subTest(type=t):
+                _wire(mock_get_client, mock_get_type, mock_get_svc, rows=[])
+                with patch("ads_mcp.tools.conversions.time.sleep") as sleep:
+                    result = create_conversion_action(
+                        customer_id="123", name="x", category="CONTACT", type=t
+                    )
+                self.assertEqual(sleep.call_count, 5)
+                self.assertFalse(result["snippets_ready"])
+
+
 class TestUpdateConversionAction(unittest.TestCase):
 
     @patch(PATCHES[0])
