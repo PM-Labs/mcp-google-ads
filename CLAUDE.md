@@ -123,7 +123,7 @@ Four tools: `create_conversion_action`, `update_conversion_action`,
   enabled in the Cloud project, a refresh token re-minted with the
   `https://www.googleapis.com/auth/datamanager` scope (a shared credential — it
   affects every tool), and the operating account granted access to the
-  destination. Not built; needs a decision first.
+  destination. **Decision 1 Oct 2026: dropped, don't chase the permission.** HubSpot already uploads our click conversions itself and no team skill uploads clicks; and granting the Google Ads scope to an analytics service account via domain-wide delegation would let it act as any employee with Ads access (delegation is not limited to info@).
 - **`validate_only` lives in the request object.** The client library's
   `upload_*_conversions()` methods don't take it as a keyword; build the request
   type. Mock-based tests accepted the bad call and the tool shipped broken, so
