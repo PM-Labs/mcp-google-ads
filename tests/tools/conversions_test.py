@@ -643,6 +643,49 @@ class TestRemoveConversionAction(unittest.TestCase):
         client.get_service.return_value.mutate_conversion_actions.assert_not_called()
 
 
+class TestParseSendTo(unittest.TestCase):
+    """The conversion id/label come from the event snippet, whose shape depends
+    on the type: web pages use a 'send_to' event, website calls use a 'config'
+    call (found live, 2026-10-01 -- the id and label came back empty)."""
+
+    def _snip(self, text):
+        return SimpleNamespace(event_snippet=text)
+
+    def test_web_page_send_to_event(self):
+        from ads_mcp.tools.conversions import _parse_send_to
+        text = "<script>gtag('event', 'conversion', {'send_to': 'AW-123456789/abcDEF_-1'});</script>"
+        self.assertEqual(
+            _parse_send_to([self._snip(text)]),
+            ("AW-123456789", "abcDEF_-1", "AW-123456789/abcDEF_-1"),
+        )
+
+    def test_website_call_config_snippet(self):
+        from ads_mcp.tools.conversions import _parse_send_to
+        # Exact shape returned by Google for a WEBSITE_CALL conversion.
+        text = (
+            "<script>\n  gtag('config', 'AW-17470914837/p5QQCJDK64wdEJWC5IpB', {\n"
+            "    'phone_conversion_number': 'REPLACE WITH VALUE'\n  });\n</script>\n"
+        )
+        self.assertEqual(
+            _parse_send_to([self._snip(text)]),
+            (
+                "AW-17470914837",
+                "p5QQCJDK64wdEJWC5IpB",
+                "AW-17470914837/p5QQCJDK64wdEJWC5IpB",
+            ),
+        )
+
+    def test_config_without_a_label_is_not_a_match(self):
+        """The global site tag configures the account id only; it has no label."""
+        from ads_mcp.tools.conversions import _parse_send_to
+        text = "<script>gtag('config', 'AW-17470914837');</script>"
+        self.assertEqual(_parse_send_to([self._snip(text)]), (None, None, None))
+
+    def test_no_snippets(self):
+        from ads_mcp.tools.conversions import _parse_send_to
+        self.assertEqual(_parse_send_to([]), (None, None, None))
+
+
 class TestFormatGoogleAdsError(unittest.TestCase):
 
     def test_includes_field_path(self):

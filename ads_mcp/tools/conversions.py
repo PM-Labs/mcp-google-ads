@@ -56,14 +56,20 @@ def _resolve_enum(client, enum_name: str, value: str):
 def _parse_send_to(snippets) -> tuple[Optional[str], Optional[str], Optional[str]]:
     """Extracts (conversion_id, label, send_to) from a conversion action's tag snippets.
 
-    The gtag event snippet contains `'send_to': 'AW-XXXXXXXXX/label'`. The
-    AW-prefixed value is the account-level conversion ID; the label is per
-    conversion action.
+    The AW-prefixed value is the account-level conversion ID; the label is per
+    conversion action. Where it appears depends on the type:
+      - web page: the event snippet has `'send_to': 'AW-XXXXXXXXX/label'`
+      - website call: the event snippet is `gtag('config', 'AW-XXXXXXXXX/label', ...)`
+    The global site tag only configures the bare account id (no label), so it
+    is deliberately not matched.
     """
     for snippet in snippets:
         event_snippet = getattr(snippet, "event_snippet", "") or ""
         match = re.search(
             r"send_to['\"]?\s*:\s*['\"]([^'\"]+)['\"]", event_snippet
+        ) or re.search(
+            r"gtag\(\s*['\"]config['\"]\s*,\s*['\"](AW-[0-9]+/[^'\"]+)['\"]",
+            event_snippet,
         )
         if match:
             send_to = match.group(1)

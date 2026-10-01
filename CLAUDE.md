@@ -129,6 +129,11 @@ Four tools: `create_conversion_action`, `update_conversion_action`,
   type. Mock-based tests accepted the bad call and the tool shipped broken, so
   the upload tests use REAL v25 protobuf classes plus a signature check on the
   real client.
+- **Where the conversion id/label live depends on the type.** Web page: a
+  `'send_to': 'AW-…/label'` event. Website call: a `gtag('config', 'AW-…/label')`
+  call. `_parse_send_to` handles both; the global site tag has the bare account
+  id only, so it is not matched. Add a case there when a new type's snippet
+  returns empty id/label.
 - **Only send what the caller asked for — live proof:** Google rejects
   `value_settings.always_use_default_value` (even `False`) on website-call and
   ad-call types, so it is sent only when `True`. Unit tests can't catch this
