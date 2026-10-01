@@ -9,7 +9,19 @@ from google.ads.googleads.v25.errors.types.errors import (
     GoogleAdsError,
     GoogleAdsFailure,
 )
+from google.ads.googleads.v25.services.types import conversion_upload_service as cus
 from google.rpc import status_pb2
+
+# REAL protobuf classes, not mocks. Mocks accept any keyword, which hid a
+# production bug: the client library takes validate_only only via a request
+# object. Real protos reject unknown fields, so a wrong name fails here.
+PROTOS = {
+    "ClickConversion": cus.ClickConversion,
+    "CallConversion": cus.CallConversion,
+    "UploadClickConversionsRequest": cus.UploadClickConversionsRequest,
+    "UploadCallConversionsRequest": cus.UploadCallConversionsRequest,
+    "GoogleAdsFailure": GoogleAdsFailure,
+}
 
 PATCHES = (
     "ads_mcp.utils.get_googleads_service",
@@ -58,9 +70,7 @@ def _wire(mock_get_client, mock_get_type, mock_get_svc, response=None):
     made = []
 
     def make(name):
-        if name == "GoogleAdsFailure":
-            return GoogleAdsFailure()
-        obj = Recording()
+        obj = PROTOS[name]()
         made.append(obj)
         return obj
 
@@ -179,18 +189,23 @@ class TestUploadHappyPaths(unittest.TestCase):
         )
 
         kwargs = upload.upload_click_conversions.call_args.kwargs
-        self.assertEqual(kwargs["customer_id"], "123456")
-        self.assertIs(kwargs["partial_failure"], True)
-        self.assertIs(kwargs["validate_only"], False)
-        row = kwargs["conversions"][0]
+        # Everything goes through one request object (the library takes no
+        # flattened validate_only).
+        self.assertEqual(set(kwargs), {"request"})
+        request = kwargs["request"]
+        self.assertEqual(request.customer_id, "123456")
+        self.assertIs(request.partial_failure, True)
+        self.assertIs(request.validate_only, False)
+        row = request.conversions[0]
         self.assertEqual(row.gclid, "g-1")
         self.assertEqual(row.conversion_action, "customers/123456/conversionActions/789")
         self.assertEqual(row.conversion_date_time, GOOD_TIME)
         self.assertEqual(row.conversion_value, 50.0)
         self.assertEqual(row.currency_code, "AUD")
         self.assertEqual(row.order_id, "o-1")
-        # Optional fields not supplied must not be assigned.
-        self.assertNotIn("gbraid", row.assigned)
+        # Optional fields not supplied must not be set.
+        self.assertEqual(row.gbraid, "")
+        self.assertEqual(row.wbraid, "")
         self.assertEqual(result["submitted"], 1)
         self.assertEqual(result["succeeded"], 1)
         self.assertEqual(result["failed"], 0)
@@ -215,7 +230,10 @@ class TestUploadHappyPaths(unittest.TestCase):
         )
 
         upload.upload_click_conversions.assert_not_called()
-        row = upload.upload_call_conversions.call_args.kwargs["conversions"][0]
+        request = upload.upload_call_conversions.call_args.kwargs["request"]
+        self.assertEqual(request.customer_id, "123")
+        self.assertIs(request.partial_failure, True)
+        row = request.conversions[0]
         self.assertEqual(row.caller_id, "+61400000000")
         self.assertEqual(row.call_start_date_time, GOOD_TIME)
         self.assertEqual(row.conversion_value, 10.0)
@@ -235,9 +253,8 @@ class TestUploadHappyPaths(unittest.TestCase):
             validate_only=True,
         )
 
-        self.assertIs(
-            upload.upload_click_conversions.call_args.kwargs["validate_only"], True
-        )
+        request = upload.upload_click_conversions.call_args.kwargs["request"]
+        self.assertIs(request.validate_only, True)
         self.assertTrue(result["validate_only"])
         self.assertEqual(result["results"][0]["status"], "validated")
 
@@ -297,6 +314,21 @@ class TestUploadPartialFailure(unittest.TestCase):
                 conversions=[_click()],
             )
         self.assertIn("[field: conversion_action]", str(ctx.exception))
+
+
+class TestRealClientSignature(unittest.TestCase):
+    """The real client methods must accept the `request` object we send."""
+
+    def test_upload_methods_take_a_request_object(self):
+        import inspect
+        from google.ads.googleads.v25.services.services.conversion_upload_service import (
+            ConversionUploadServiceClient,
+        )
+        for name in ("upload_click_conversions", "upload_call_conversions"):
+            with self.subTest(method=name):
+                params = inspect.signature(getattr(ConversionUploadServiceClient, name)).parameters
+                self.assertIn("request", params)
+                self.assertNotIn("validate_only", params)
 
 
 class TestImportOrder(unittest.TestCase):

@@ -343,7 +343,8 @@ def update_conversion_action(
         conversion_action_id: Numeric id of the conversion action (or its full
             resource name).
         name: New name.
-        status: "ENABLED" or "HIDDEN".
+        status: Only "ENABLED" (e.g. to bring back a removed conversion).
+            Google rejects HIDDEN on update (checked live 2026-10-01).
         category: New category (e.g. SUBMIT_LEAD_FORM, PHONE_CALL_LEAD).
         counting_type: "ONE_PER_CLICK" or "MANY_PER_CLICK".
         click_through_lookback_window_days: Click-through conversion window.
@@ -360,12 +361,15 @@ def update_conversion_action(
         (id, name, status, type, category, primary_for_goal, counting_type,
         phone_call_duration_seconds, lookback windows and value settings).
     """
-    if status is not None and status not in ("ENABLED", "HIDDEN"):
+    if status is not None and status != "ENABLED":
         if status == "REMOVED":
             raise ToolError(
                 "To remove a conversion action use remove_conversion_action."
             )
-        raise ToolError("status must be ENABLED or HIDDEN.")
+        raise ToolError(
+            "status can only be set to ENABLED (e.g. to bring back a removed "
+            "conversion). Google rejects HIDDEN on update."
+        )
 
     cid, action_id, resource_name = _conversion_action_resource_name(
         customer_id, conversion_action_id
@@ -456,9 +460,9 @@ def remove_conversion_action(customer_id: str, conversion_action_id: str) -> dic
     """Removes a conversion action. It stays listed with status REMOVED and
     campaigns that were bidding on it lose that signal while it is removed.
     Google currently lets update_conversion_action(status="ENABLED") bring a
-    removed one back (checked live 2026-10-01) but do not plan around that. Use
-    update_conversion_action(status="HIDDEN") instead if you only want to stop it
-    being used while keeping it.
+    removed one back (checked live 2026-10-01) but do not plan around that. The
+    name of a removed conversion stays reserved, so you cannot create a new one
+    with the same name.
 
     Args:
         customer_id: Google Ads customer ID (digits only, no hyphens).

@@ -449,6 +449,38 @@ class TestUpdateConversionAction(unittest.TestCase):
     @patch(PATCHES[0])
     @patch(PATCHES[1])
     @patch(PATCHES[2])
+    def test_hidden_status_refused_with_a_clear_reason(
+        self, mock_get_client, mock_get_type, mock_get_svc
+    ):
+        """Live finding: Google rejects HIDDEN on update for every type tried."""
+        client, _, _ = _wire(mock_get_client, mock_get_type, mock_get_svc)
+
+        from ads_mcp.tools.conversions import update_conversion_action
+        from fastmcp.exceptions import ToolError
+        with self.assertRaises(ToolError) as ctx:
+            update_conversion_action(
+                customer_id="123", conversion_action_id="789", status="HIDDEN"
+            )
+        self.assertIn("ENABLED", str(ctx.exception))
+        client.get_service.return_value.mutate_conversion_actions.assert_not_called()
+
+    @patch(PATCHES[0])
+    @patch(PATCHES[1])
+    @patch(PATCHES[2])
+    def test_enabled_status_allowed_to_revive_a_removed_action(
+        self, mock_get_client, mock_get_type, mock_get_svc
+    ):
+        _, _, op = _wire(mock_get_client, mock_get_type, mock_get_svc)
+
+        from ads_mcp.tools.conversions import update_conversion_action
+        update_conversion_action(
+            customer_id="123", conversion_action_id="789", status="ENABLED"
+        )
+        self.assertEqual(op.update_mask.paths, ["status"])
+
+    @patch(PATCHES[0])
+    @patch(PATCHES[1])
+    @patch(PATCHES[2])
     def test_removed_status_points_at_the_remove_tool(
         self, mock_get_client, mock_get_type, mock_get_svc
     ):

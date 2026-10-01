@@ -102,8 +102,10 @@ Four tools: `create_conversion_action`, `update_conversion_action`,
   invariant above — never assign a field the caller didn't pass.
 - **Remove sets status REMOVED** (the action stays listed). Google currently
   lets `update_conversion_action(status="ENABLED")` revive a removed action
-  (verified live 2026-10-01), so don't call removal permanent. `status` on
-  update accepts only ENABLED/HIDDEN and points at the remove tool.
+  (verified live 2026-10-01), so don't call removal permanent. A removed
+  action's **name stays reserved**: creating another with the same name fails
+  with "name already exists". `status` on update accepts only ENABLED (Google
+  rejects HIDDEN on update for every type tried) and points at the remove tool.
 - **Every write reads back** from the API and returns that state, not the
   request echoed.
 - **Uploads always use partial failure** and return one result per row.
@@ -114,6 +116,11 @@ Four tools: `create_conversion_action`, `update_conversion_action`,
   (`TYPES_WITH_TAG`: web page, website call, click-to-call, upload calls — set
   from live evidence); other types return `snippets_ready: None` instead of
   burning the retry budget.
+- **`validate_only` lives in the request object.** The client library's
+  `upload_*_conversions()` methods don't take it as a keyword; build the request
+  type. Mock-based tests accepted the bad call and the tool shipped broken, so
+  the upload tests use REAL v25 protobuf classes plus a signature check on the
+  real client.
 - **Only send what the caller asked for — live proof:** Google rejects
   `value_settings.always_use_default_value` (even `False`) on website-call and
   ad-call types, so it is sent only when `True`. Unit tests can't catch this

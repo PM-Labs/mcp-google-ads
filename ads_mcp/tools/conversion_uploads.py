@@ -189,18 +189,24 @@ def upload_offline_conversions(
             item.currency_code = row["currency_code"]
         built.append(item)
 
+    # The client library accepts validate_only only inside a request object, not
+    # as a keyword argument (found live, 2026-10-01).
+    request = utils.get_googleads_type(
+        "UploadClickConversionsRequest"
+        if kind == "click"
+        else "UploadCallConversionsRequest"
+    )
+    request.customer_id = cid
+    request.conversions.extend(built)
+    request.partial_failure = True
+    request.validate_only = validate_only
     upload = (
         service.upload_click_conversions
         if kind == "click"
         else service.upload_call_conversions
     )
     try:
-        response = upload(
-            customer_id=cid,
-            conversions=built,
-            partial_failure=True,
-            validate_only=validate_only,
-        )
+        response = upload(request=request)
     except GoogleAdsException as ex:
         raise ToolError(_format_googleads_error(ex))
 
