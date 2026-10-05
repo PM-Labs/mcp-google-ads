@@ -66,7 +66,11 @@ green, and every caller (reporting cron, Ad Ops Sentinel, the claude.ai
 connector) failed with `Your default credentials were not found` until the
 droplet was reset to origin on 2026-10-05. `tests/pm_static_auth_test.py` now
 runs inside `docker build`, so a resolution that drops the branch fails the
-build (and `sync.sh` rolls back) instead of deploying.
+build (and `sync.sh` rolls back) instead of deploying. Upstream also ships a
+`Dockerfile`: when resolving a conflict there, keep the
+`RUN python -m unittest tests.pm_static_auth_test` step — dropping it removes
+the guard silently. If upstream renames `_create_credentials()`, update the
+test rather than deleting it (every sync rolls back until you do).
 
 Consequence: every write tool's success depends on the Google Ads access role
 of that one identity on MCC `1062239797`. If it holds `READ_ONLY`, all reads
