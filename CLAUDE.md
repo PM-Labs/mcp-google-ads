@@ -58,6 +58,16 @@ The server authenticates with a **static refresh token**
 (`GOOGLE_ADS_REFRESH_TOKEN`), not per-user OAuth — see `ads_mcp/utils.py`. It
 does **not** act as the Claude session user.
 
+**Never drop this when resolving an upstream sync conflict.** Upstream's
+`_create_credentials()` uses a FastMCP access token or Application Default
+Credentials only; our env refresh-token branch must survive every merge. On
+2026-10-02 a manual sync took upstream's version, the health check stayed
+green, and every caller (reporting cron, Ad Ops Sentinel, the claude.ai
+connector) failed with `Your default credentials were not found` until the
+droplet was reset to origin on 2026-10-05. `tests/pm_static_auth_test.py` now
+runs inside `docker build`, so a resolution that drops the branch fails the
+build (and `sync.sh` rolls back) instead of deploying.
+
 Consequence: every write tool's success depends on the Google Ads access role
 of that one identity on MCC `1062239797`. If it holds `READ_ONLY`, all reads
 succeed and **all ~20 mutating tools fail** with
