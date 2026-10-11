@@ -92,3 +92,6 @@ f28c5bb3e421556418e531a021f921217e88ac2e
 
 # Auto-blocked by security scanner 2026-10-09T19:52:19+00:00
 844541a8d993a562415b456924c7ea9f3ff981b9  # security-scan: suspiciously long line (>300 chars, possible obfuscation)
+
+# b50d31e9 — docs only: reorganise MCP HTTP interoperability doc (README.md diverges; no code changes)
+b50d31e9298d45b6d5f941cb1bcdf0ee1ce6b774
