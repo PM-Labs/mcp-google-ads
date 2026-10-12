@@ -107,3 +107,6 @@ e8612507753f12622e858090353b71a644f1289f
 
 # 73e5ce3d — add optional login-customer-id param to all tools; applied as e1cfd2f (conflict: dup clean_customer_id + llm_cases token counts)
 73e5ce3d487ecadb30b70feb1432a4e140c4811b
+
+# 12573f01 — adds GoogleTokenVerifier test to server_test.py; our fork removed GoogleProvider entirely (auth at proxy level)
+12573f01837b6f562791918cc0b3e6adbe33ffd8
