@@ -104,3 +104,6 @@ e8612507753f12622e858090353b71a644f1289f
 
 # 08a6fa96 — deletes .gitattributes + docs/mcp-http-interoperability.md + README lines; docs-only deletions that conflict with our fork's content
 08a6fa9658d17a60b35381a44d67a29b0dbaa8e6
+
+# 73e5ce3d — add optional login-customer-id param to all tools; applied as e1cfd2f (conflict: dup clean_customer_id + llm_cases token counts)
+73e5ce3d487ecadb30b70feb1432a4e140c4811b
