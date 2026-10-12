@@ -101,3 +101,6 @@ ad3453a6f7e10669afac48967560f576ffdaf1b6
 
 # e8612507 — smoke test golden file update (annotations/title shape); our fork's golden files diverge due to different tool set
 e8612507753f12622e858090353b71a644f1289f
+
+# 08a6fa96 — deletes .gitattributes + docs/mcp-http-interoperability.md + README lines; docs-only deletions that conflict with our fork's content
+08a6fa9658d17a60b35381a44d67a29b0dbaa8e6
