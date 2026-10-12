@@ -98,3 +98,6 @@ b50d31e9298d45b6d5f941cb1bcdf0ee1ce6b774
 
 # ad3453a6 — docs only: clarify MCP client and Quadlet security config (README.md + mcp-http-interoperability.md diverge)
 ad3453a6f7e10669afac48967560f576ffdaf1b6
+
+# e8612507 — smoke test golden file update (annotations/title shape); our fork's golden files diverge due to different tool set
+e8612507753f12622e858090353b71a644f1289f
