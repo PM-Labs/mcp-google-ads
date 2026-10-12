@@ -113,3 +113,6 @@ e8612507753f12622e858090353b71a644f1289f
 
 # 01258609 — fastmcp>=4.0.3→4.0.6 (stop OAuth tokens being logged); applied as 5959a30 (kept mcp[cli]>=1.2.0 not upstream's ==2.0.0 pin)
 01258609c5157b827dc7b1260919568d47f080a4
+
+# 17778d6 — removes configure_safe_http_logging (fastmcp fixed upstream); no-op for our fork (never had it); upstream's GoogleProvider tests also skipped
+17778d6566434471a9486d6459bc42ced2bc1e48
