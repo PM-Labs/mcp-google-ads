@@ -116,3 +116,6 @@ e8612507753f12622e858090353b71a644f1289f
 
 # 17778d6 — removes configure_safe_http_logging (fastmcp fixed upstream); no-op for our fork (never had it); upstream's GoogleProvider tests also skipped
 17778d6566434471a9486d6459bc42ced2bc1e48
+
+# 184f4493 — upstream version bump + add author to pyproject.toml; we manage our own versioning
+184f449325616afa3ef99b8a41db1c456e4cde19
