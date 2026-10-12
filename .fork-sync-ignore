@@ -95,3 +95,6 @@ f28c5bb3e421556418e531a021f921217e88ac2e
 
 # b50d31e9 — docs only: reorganise MCP HTTP interoperability doc (README.md diverges; no code changes)
 b50d31e9298d45b6d5f941cb1bcdf0ee1ce6b774
+
+# ad3453a6 — docs only: clarify MCP client and Quadlet security config (README.md + mcp-http-interoperability.md diverge)
+ad3453a6f7e10669afac48967560f576ffdaf1b6
