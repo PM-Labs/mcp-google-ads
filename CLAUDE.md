@@ -155,6 +155,27 @@ Four tools: `create_conversion_action`, `update_conversion_action`,
 
 ---
 
+## Conversion-goal tools (`conversion_goals.py`)
+
+Pathfinder-authored, like `conversions.py`. Three tools that flip which goals
+campaigns bid on: `update_customer_conversion_goal` (account-default goals,
+the "Use as account-default goal" switch), `update_campaign_conversion_goal`
+(campaign-specific goals) and `set_campaign_goal_config_level` (CUSTOMER =
+the campaign uses the account defaults, CAMPAIGN = its own goals).
+
+- A goal is a `(category, origin)` pair and can't be created or removed via the
+  API: Google creates it once a conversion action of that kind exists. An
+  unknown pair returns NOT_FOUND.
+- Resource names use the enum NAMES (`.../customerConversionGoals/SUBMIT_LEAD_FORM~WEBSITE`,
+  `.../campaignConversionGoals/<campaign>~CATEGORY~ORIGIN`), so the tools
+  validate the name rather than resolving to the numeric value.
+- `biddable=False` is a real value and is always in the update mask.
+- Which actions are primary inside a goal is still `primary_for_goal` on
+  `update_conversion_action`; a primary action in a non-biddable goal is not
+  bid on.
+
+---
+
 ## Env vars
 
 | Var | Notes |
