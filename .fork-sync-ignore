@@ -119,3 +119,6 @@ e8612507753f12622e858090353b71a644f1289f
 
 # 184f4493 — upstream version bump + add author to pyproject.toml; we manage our own versioning
 184f449325616afa3ef99b8a41db1c456e4cde19
+
+# 5feb829 — propose-and-confirm workflow for mutate methods (2026-11-11, Trello qeiUunLO). Targets create_asset/labels/upload_video which our fork doesn't ship; conflicts with coordinator.py (we removed GoogleProvider, auth at proxy level) and diverged golden files. TODO: consider a manual port of propose_and_confirm.py as a separate feature card.
+5feb82947d9a32073e6515434ff594aac68c47df
