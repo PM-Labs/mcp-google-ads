@@ -145,3 +145,6 @@ ed66847  upstream version bump 0.0.6 - we manage our own versioning
 8c3f6f5  audit framework - needs design (storage backend); our fork has no auth_storage.py
 
 # 2d01b97e - hand-ported 2026-11-16 (uvicorn access_log off + httpx logger WARNING).
+
+# f34ac1b - already applied as 30e2aa4 (2026-11-16); patch-id detection did not match, listed to suppress re-pick
+f34ac1b  already applied as 30e2aa4 (pin actions to a specific hash)
