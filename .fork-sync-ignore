@@ -122,3 +122,26 @@ e8612507753f12622e858090353b71a644f1289f
 
 # 5feb829 — propose-and-confirm workflow for mutate methods (2026-11-11, Trello qeiUunLO). Targets create_asset/labels/upload_video which our fork doesn't ship; conflicts with coordinator.py (we removed GoogleProvider, auth at proxy level) and diverged golden files. TODO: consider a manual port of propose_and_confirm.py as a separate feature card.
 5feb82947d9a32073e6515434ff594aac68c47df
+
+# --- 2026-11-16 review (Trello 7MfteNnC): upstream write tools + audit framework held back ---
+# Upstream added create_asset / manage_labels / manage_label_associations / upload_video_asset
+# (4fbb3c2, 838a03a, af8eb02, 2acfe33). They are new MUTATING tools and upstream's
+# propose-and-confirm layer (5feb829, ignored) is what gates them. Taking the tools without the
+# confirm layer would ship un-gated write tools. Revisit together as one feature card
+# (port propose_and_confirm.py + these tools). Do not take one without the other.
+4fbb3c2  upload_video tool (new write tool) - held until propose-and-confirm is ported
+838a03a  label management tools (new write tools) - held until propose-and-confirm is ported
+af8eb02  ids-not-resource-names signature change for the held label/asset/video tools
+2acfe33  test/tool-category fixes for the held label/asset/video tools
+8ae310b  propose-and-confirm pre-review cleanup (depends on ignored 5feb829)
+733d906  python 3.11 compat for held create_asset.py
+5ebffae  README-only developer-token wording (README diverges)
+ed66847  upstream version bump 0.0.6 - we manage our own versioning
+
+# 8c3f6f5 - tool call auditability framework (890-line audit.py + audit storage backends in
+# auth_storage.py, which our fork does not have). Needs a design decision (where audit records
+# are stored on the droplet, background-task instrumentation) - not a mechanical port.
+# TODO: separate feature card.
+8c3f6f5  audit framework - needs design (storage backend); our fork has no auth_storage.py
+
+# 2d01b97e - hand-ported 2026-11-16 (uvicorn access_log off + httpx logger WARNING).
