@@ -37,7 +37,17 @@ def run_server() -> None:
     transport = os.environ.get("MCP_TRANSPORT", "stdio")
     host = os.environ.get("MCP_HOST", "0.0.0.0")
     port = int(os.environ.get("MCP_PORT", "8081"))
-    mcp.run(transport=transport, host=host, port=port)
+    if transport == "stdio":
+        mcp.run(transport=transport)
+    else:
+        # Ported from upstream 2d01b97e: no uvicorn access log, so request
+        # URLs (which can carry OAuth query params) never reach stdout.
+        mcp.run(
+            transport=transport,
+            host=host,
+            port=port,
+            uvicorn_config={"access_log": False},
+        )
 
 
 if __name__ == "__main__":

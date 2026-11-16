@@ -42,6 +42,7 @@ _GAQL_FILENAME = "gaql_resources.txt"
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # Read-only scope for Google Ads API.
 _READ_ONLY_ADS_SCOPE = "https://www.googleapis.com/auth/adwords"
