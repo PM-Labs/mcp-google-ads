@@ -148,3 +148,8 @@ ed66847  upstream version bump 0.0.6 - we manage our own versioning
 
 # f34ac1b - already applied as 30e2aa4 (2026-11-16); patch-id detection did not match, listed to suppress re-pick
 f34ac1b  already applied as 30e2aa4 (pin actions to a specific hash)
+
+# 45baaee - upstream README rewrite (2026-11-17). README-only. The new README documents propose-and-confirm and
+# the audit framework, which we have not ported (see the held-back write tools entries above), and our README
+# carries Pathfinder-specific deployment notes. Revisit when propose-and-confirm/audit are ported.
+45baaeea3be92e9acdd6ca087fac77c282f0ad40 # README rewrite documents features our fork does not ship
